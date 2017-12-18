@@ -11,7 +11,6 @@ namespace Day18
         List<Instruction> instructions;
         Dictionary<char, long> registers;
         int insPtr;
-        long lastFrequency;
         int numberOfProgram;
         List<long> buf;
         public AssemblerExecutor oth { get; set; }
@@ -19,17 +18,13 @@ namespace Day18
         public Object thisLock = new object();
 
         long howManySend = 0;
+        bool isDeadlock = false;
 
         public AssemblerExecutor(int numberOfProgram)
         {
             instructions = new List<Instruction>();
             registers = new Dictionary<char, long>();
             registers.Add('p', numberOfProgram);
-            registers.Add('a', numberOfProgram);
-            registers.Add('b', numberOfProgram);
-            registers.Add('f', numberOfProgram);
-            registers.Add('i', numberOfProgram);
-            lastFrequency = 0;
             insPtr = 0;
             buf = new List<long>();
             this.numberOfProgram = numberOfProgram;
@@ -42,7 +37,7 @@ namespace Day18
 
         public void Execute()
         {
-            while (true)
+            while (!isDeadlock)
             {
                 ExecuteInstruction(instructions[insPtr]);
             }
@@ -55,7 +50,7 @@ namespace Day18
 
         private void ExecuteInstruction(Instruction toExecute)
         {
-            long firstOpValue;
+            long firstOpValue = 0;
             long secondOpValue = 0;
 
             if (!int.TryParse(toExecute.first.ToString(), out int tmp))
@@ -70,7 +65,7 @@ namespace Day18
                 firstOpValue = tmp;
             }
 
-            if (toExecute.second.Length>0)
+            if (toExecute.second.Length > 0)
             {
                 if (!int.TryParse(toExecute.second, out tmp))
                 {
@@ -83,7 +78,7 @@ namespace Day18
                 else
                 {
                     secondOpValue = tmp;
-                } 
+                }
             }
 
             switch (toExecute.name)
@@ -93,7 +88,6 @@ namespace Day18
                     {
                         oth.buf.Add(firstOpValue);
                         howManySend++;
-                        Console.WriteLine($"Process {numberOfProgram} send {firstOpValue} (total {howManySend})");
                     }
                     insPtr++;
                     break;
@@ -114,11 +108,18 @@ namespace Day18
                     insPtr++;
                     break;
                 case Instruction.instructionType.rcv:
-                    while (buf.Count == 0) ;
-                    lock(thisLock)
+                    int i = 0;
+                    while (buf.Count == 0 && ++i < 10E6) ;
+                    if (i == 10E6)
+                    {
+                        Console.WriteLine($"Process {numberOfProgram} has sent {howManySend}");
+                        isDeadlock = true;
+                        break;
+                    }
+
+                    lock (thisLock)
                     {
                         registers[toExecute.first] = buf.First();
-                        Console.WriteLine($"\t\tProcess {numberOfProgram} received {buf.First()}");
                         buf.RemoveAt(0);
                     }
                     insPtr++;
