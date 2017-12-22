@@ -13,9 +13,7 @@ namespace Day22
             string input = inputFile.ReadToEnd().TrimEnd('\n');
             var lines = input.Split('\n').Select(l => l.TrimEnd()).ToArray();
 
-            List<Tuple<int, int>> infectedNodes = new List<Tuple<int, int>>();
-            List<Tuple<int, int>> weakenedNodes = new List<Tuple<int, int>>();
-            List<Tuple<int, int>> flaggedNodes = new List<Tuple<int, int>>();
+            Dictionary<Tuple<int, int>, State> nodes = new Dictionary<Tuple<int, int>, State>();
 
             for (int i = 0, k = -lines.Length / 2; i < lines.Length; i++, k++)
             {
@@ -23,7 +21,7 @@ namespace Day22
                 {
                     if (lines[i][j] == '#')
                     {
-                        infectedNodes.Add(new Tuple<int, int>(k, l));
+                        nodes.Add(new Tuple<int, int>(k, l), State.infected);
                     }
                 }
             }
@@ -35,26 +33,13 @@ namespace Day22
 
             for (int burst = 0; burst < 10000000; burst++)
             {
-                if (burst % 100000 == 0)
-                {
-                    Console.WriteLine(burst);
-                }
+                State tmp;
+                if (!nodes.TryGetValue(new Tuple<int, int>(x, y), out tmp))
+                    tmp = State.clean;
 
-                Tuple<int, int> tmpInf = null, tmpWeak = null, tmpFlagg = null;
-                tmpInf = infectedNodes.Find(n => n.Item1 == x && n.Item2 == y);
-                if (tmpInf == null)
+                if (tmp == State.infected) //is infected so turn right and become flagged
                 {
-                    tmpWeak = weakenedNodes.Find(n => n.Item1 == x && n.Item2 == y);
-                    if (tmpWeak == null)
-                    {
-                        tmpFlagg = flaggedNodes.Find(n => n.Item1 == x && n.Item2 == y);
-                    }
-                }
-
-                if (tmpInf != null) //is infected so turn right and become flagged
-                {
-                    infectedNodes.Remove(tmpInf);
-                    flaggedNodes.Add(tmpInf);
+                    nodes[new Tuple<int, int>(x, y)] = State.flagged;
 
                     switch (dir)
                     {
@@ -72,17 +57,14 @@ namespace Day22
                             break;
                     }
                 }
-
-                if (tmpWeak != null) //is weakened so become infected
+                else if (tmp == State.weakened) //is weakened so become infected
                 {
-                    weakenedNodes.Remove(tmpWeak);
-                    infectedNodes.Add(tmpWeak);
+                    nodes[new Tuple<int, int>(x, y)] = State.infected;
                     infections++;
                 }
-
-                if (tmpFlagg != null) //is flagged so become clean and reverse direction
+                else if (tmp == State.flagged) //is flagged so become clean and reverse direction
                 {
-                    flaggedNodes.Remove(tmpFlagg);
+                    nodes.Remove(new Tuple<int, int>(x, y));
 
                     switch (dir)
                     {
@@ -101,9 +83,9 @@ namespace Day22
                     }
                 }
 
-                if (tmpInf == null && tmpWeak == null && tmpFlagg == null) //is not infected so tunr left
+                else //is not infected so tunr left
                 {
-                    weakenedNodes.Add(new Tuple<int, int>(x, y));
+                    nodes.Add(new Tuple<int, int>(x, y), State.weakened);
 
                     switch (dir)
                     {
@@ -143,5 +125,6 @@ namespace Day22
         }
 
         enum Direction { up, down, left, right }
+        enum State { infected, flagged, weakened, clean }
     }
 }
