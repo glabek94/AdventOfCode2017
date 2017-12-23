@@ -49,6 +49,31 @@ namespace Day23
             }
 
             Console.WriteLine(executor.Execute());
+
+            //Part 2
+            int b = 106500;
+            int c = 123500;
+            int h = 0;
+
+            for (; b <= c; b += 17)
+            {
+                bool isPrime = true;
+                for (int t = 2; t < Math.Ceiling(Math.Sqrt(b)); t++)
+                {
+                    if (b % t == 0) //b is not a prime number
+                    {
+                        isPrime = false;
+                        break;
+                    }
+                }
+
+                if (!isPrime)
+                {
+                    h++;
+                }
+            }
+
+            Console.WriteLine(h);
         }
     }
 }

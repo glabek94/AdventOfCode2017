@@ -1,0 +1,111 @@
+﻿*** Loop and if-statement identification ***
+set b 65
+set c b
+jnz a 2
+//jnz 1 5 (a == 2 so jumped over)
+mul b 100
+sub b -100000
+set c b
+sub c -17000  (a = 1	b = 106500	c = 123500)
+	set f 1
+	set d 2
+		set e 2
+			set g d
+			mul g e
+			sub g b
+			jnz g 2
+				set f 0
+			sub e -1
+			set g e
+			sub g b
+		jnz g -8
+		sub d -1
+		set g d
+		sub g b
+	jnz g -13
+	jnz f 2
+		sub h -1
+	set g b
+	sub g c
+	jnz g 2
+		jnz 1 3
+	sub b -17
+jnz 1 -23
+
+*** More human readable version ***
+a = 1	b = 106500	c = 123500
+loop
+{
+	f = 1
+	d = 2
+	do
+	{
+		e = 2
+		do
+		{
+			g = d * e - b
+			if(g == 0)
+				f = 0
+			e++
+			g = e - b
+		} while (g != 0)
+		d++
+		g = d - b
+	} while (g != 0)
+	if(f == 0)
+		h++
+	g = b - c
+	if(g == 0)
+		break
+	b = b + 17
+}
+
+*** Getting rid of helping variables in ifs and loops ***
+b = 106500	c = 123500
+loop
+{
+	f = 1
+	d = 2
+	do
+	{
+		e = 2
+		do
+		{
+			if(d * e == b)
+				f = 0
+			e++
+		} while (e != b)
+		d++
+		g = d - b
+	} while (d != b)
+	if(f == 0)
+		h++
+	if(b == c)
+		break
+	b = b + 17
+}
+
+*** C-like code ***
+b = 106500	c = 123500
+loop
+{
+	f = 1
+	for (d = 2; d <= b; d++)
+	{
+		for (e = 2; e <= b; e++)
+		{
+			if(d * e == b)
+				f = 0
+		}
+	}
+	
+	if(f == 0)
+		h++
+	
+	if(b == c)
+		break
+	else
+		b = b + 17
+}
+
+Idea: nested fors checks if b is prime number. If yes f == 1, if not f == 0. If f == 0 increment h. Checks b from its initial value to value of c. Increment b by 17.
